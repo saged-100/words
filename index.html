@@ -102,18 +102,19 @@
   </div>
 
   <script>
-    let words = [];
-    let usedWords = [];
+    // تحميل ملف JSON فيه الكلمات بدون ترجمة
+fetch('words.json')
+  .then(response => response.json())
+  .then(data => {
+    words = data.map(word => ({
+      english: word,
+      arabic: ""  // الترجمة فاضية مؤقتًا
+    }));
+  })
+  .catch(err => {
+    console.error("فشل تحميل الكلمات من الملف:", err);
+  });
 
-    // تحميل ملف JSON فيه الكلمات مع الترجمة
-    fetch('words.json')
-      .then(response => response.json())
-      .then(data => {
-        words = data;  // words هي مصفوفة من الكائنات {english: "", arabic: ""}
-      })
-      .catch(err => {
-        console.error("فشل تحميل الكلمات من الملف:", err);
-      });
 
     function filterWords() {
       const input = document.getElementById("wordInput");
