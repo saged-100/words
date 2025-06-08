@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Smash - لعبة الكلمات الإنجليزية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            padding: 30px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .search-input:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .search-input.duplicate {
+            border-color: #ff4757;
+            background-color: #ffe0e0;
+        }
+
+        .search-input.blocked {
+            border-color: #ff6b35;
+            background-color: #fff0e6;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .word-en {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .word-ar {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            direction: rtl;
+        }
+
+        .selected-words {
+            margin-top: 30px;
+        }
+
+        .selected-words h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .word-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            position: relative;
+        }
+
+        .word-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .word-card .word-en {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .word-card .word-ar {
+            color: #34495e;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .word-card .no-translation {
+            color: #95a5a6;
+            font-style: italic;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            background: #ff3742;
+        }
+
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-message.error {
+            background-color: #ffe0e0;
+            color: #d63031;
+            border: 1px solid #ff7675;
+        }
+
+        .status-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-message.success {
+            background-color: #e0ffe0;
+            color: #00b894;
+            border: 1px solid #00cec9;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            color: #34495e;
+            padding-right: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .add-word-hint {
+            background: #e8f4fd;
+            border: 1px solid #4facfe;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            color: #2c3e50;
+            font-size: 14px;
+            direction: rtl;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .game-area {
+                padding: 20px;
+            }
+            
+            .words-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Word Smash</h1>
+            <p>لعبة الكلمات الإنجليزية مع الترجمة العربية</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="instructions">
+                <h4>📋 كيفية اللعب:</h4>
+                <ul>
+                    <li>ابدأ بكتابة أي حرف في مربع البحث لرؤية الاقتراحات</li>
+                    <li>انقر على أي كلمة من الاقتراحات لإضافتها إلى قائمتك</li>
+                    <li><strong>أو اكتب أي كلمة واضغط Enter لإضافتها مباشرة</strong></li>
+                    <li>ستظهر الكلمة مع ترجمتها العربية إذا كانت متوفرة</li>
+                    <li><strong>🚫 ممنوع إضافة أسماء العلم (مثل John, London, etc.)</strong></li>
+                    <li><strong>🚫 ممنوع إضافة كلمات مشتقة من كلمات مختارة (مثل employ → employment)</strong></li>
+                    <li>إذا حاولت إضافة كلمة مكررة أو ممنوعة، ستظهر رسالة تحذير</li>
+                    <li>يمكنك حذف أي كلمة بالنقر على زر ✕</li>
+                </ul>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="ابحث عن كلمة إنجليزية أو اكتب أي كلمة واضغط Enter...">
+                <div id="suggestions" class="suggestions" style="display: none;"></div>
+                <div id="addWordHint" class="add-word-hint" style="display: none;">
+                    💡 اضغط Enter لإضافة هذه الكلمة إلى قائمتك
+                </div>
+            </div>
+
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+            <div class="selected-words">
+                <h3>🌟 الكلمات المختارة (<span id="wordCount">0</span>)</h3>
+                <div id="wordsGrid" class="words-grid"></div>
+            </div>
+
+            <div class="controls">
+                <button id="resetBtn" class="reset-btn">🔄 إعادة تعيين</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Words data with translations
+        let wordsData = [];
+        let selectedWords = [];
+
+        // Common proper nouns to block
+        const properNouns = [
+            // Names
+            'john', 'mary', 'james', 'robert', 'michael', 'william', 'david', 'richard', 'charles', 'joseph',
+            'thomas', 'christopher', 'daniel', 'paul', 'mark', 'donald', 'george', 'kenneth', 'steven', 'edward',
+            'brian', 'ronald', 'anthony', 'kevin', 'jason', 'matthew', 'gary', 'timothy', 'jose', 'larry',
+            'jeffrey', 'frank', 'scott', 'eric', 'stephen', 'andrew', 'raymond', 'gregory', 'joshua', 'jerry',
+            'dennis', 'walter', 'patrick', 'peter', 'harold', 'douglas', 'henry', 'carl', 'arthur', 'ryan',
+            'roger', 'joe', 'juan', 'jack', 'albert', 'jonathan', 'justin', 'terry', 'austin', 'sean',
+            'maria', 'patricia', 'linda', 'barbara', 'elizabeth', 'jennifer', 'susan', 'margaret', 'dorothy', 'lisa',
+            'nancy', 'karen', 'betty', 'helen', 'sandra', 'donna', 'carol', 'ruth', 'sharon', 'michelle',
+            'laura', 'sarah', 'kimberly', 'deborah', 'jessica', 'shirley', 'cynthia', 'angela', 'melissa', 'brenda',
+            'emma', 'olivia', 'ava', 'isabella', 'sophia', 'charlotte', 'mia', 'amelia', 'harper', 'evelyn',
+            
+            // Places
+            'london', 'paris', 'tokyo', 'new york', 'los angeles', 'chicago', 'houston', 'phoenix', 'philadelphia',
+            'san antonio', 'san diego', 'dallas', 'san jose', 'austin', 'jacksonville', 'fort worth', 'columbus',
+            'charlotte', 'francisco', 'indianapolis', 'seattle', 'denver', 'washington', 'boston', 'el paso',
+            'detroit', 'nashville', 'portland', 'oklahoma', 'las vegas', 'louisville', 'baltimore', 'milwaukee',
+            'albuquerque', 'tucson', 'fresno', 'sacramento', 'mesa', 'kansas', 'atlanta', 'long beach', 'colorado',
+            'raleigh', 'omaha', 'miami', 'oakland', 'minneapolis', 'tulsa', 'cleveland', 'wichita', 'arlington',
+            'england', 'france', 'germany', 'italy', 'spain', 'canada', 'australia', 'japan', 'china', 'india',
+            'brazil', 'russia', 'mexico', 'argentina', 'egypt', 'turkey', 'iran', 'thailand', 'vietnam', 'poland',
+            'ukraine', 'romania', 'netherlands', 'belgium', 'greece', 'portugal', 'czech', 'hungary', 'sweden',
+            'austria', 'belarus', 'switzerland', 'bulgaria', 'serbia', 'denmark', 'finland', 'slovakia', 'norway',
+            'ireland', 'croatia', 'bosnia', 'albania', 'lithuania', 'slovenia', 'latvia', 'estonia', 'macedonia',
+            'moldova', 'malta', 'iceland', 'andorra', 'monaco', 'liechtenstein', 'vatican', 'san marino',
+            
+            // Brands/Companies
+            'apple', 'google', 'microsoft', 'amazon', 'facebook', 'tesla', 'nike', 'adidas', 'coca-cola', 'pepsi',
+            'mcdonalds', 'starbucks', 'walmart', 'target', 'samsung', 'sony', 'toyota', 'honda', 'ford', 'bmw',
+            'mercedes', 'volkswagen', 'audi', 'porsche', 'ferrari', 'lamborghini', 'rolls-royce', 'bentley',
+            'jaguar', 'land rover', 'volvo', 'saab', 'peugeot', 'renault', 'citroen', 'fiat', 'alfa romeo',
+            'maserati', 'bugatti', 'mclaren', 'aston martin', 'lotus', 'mini', 'smart', 'tesla', 'lucid',
+            'rivian', 'nio', 'xpeng', 'byd', 'geely', 'chery', 'great wall', 'dongfeng', 'faw', 'saic',
+            
+            // Days/Months
+            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+            'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+
+        // Common derivational suffixes and prefixes
+        const derivationalSuffixes = [
+            'ment', 'tion', 'sion', 'ness', 'ity', 'ty', 'er', 'or', 'ar', 'ist', 'ian', 'ant', 'ent',
+            'ful', 'less', 'ous', 'ious', 'eous', 'ive', 'ative', 'itive', 'able', 'ible', 'al', 'ial',
+            'ic', 'ical', 'ly', 'ward', 'wise', 'like', 'ship', 'hood', 'dom', 'age', 'ery', 'ary',
+            'ory', 'ure', 'ture', 'sure', 'ance', 'ence', 'ancy', 'ency', 'ing', 'ed', 's', 'es'
+        ];
+
+        const derivationalPrefixes = [
+            'un', 're', 'pre', 'dis', 'mis', 'over', 'under', 'out', 'up', 'sub', 'inter', 'super',
+            'trans', 'semi', 'anti', 'auto', 'co', 'counter', 'de', 'ex', 'extra', 'hyper', 'in',
+            'im', 'il', 'ir', 'non', 'post', 'pro', 'pseudo', 'self', 'ultra', 'vice', 'bi', 'tri',
+            'multi', 'poly', 'mono', 'uni', 'micro', 'macro', 'mega', 'mini', 'neo', 'proto'
+        ];
+
+        // Try to load words from external JSON file first, fallback to embedded data
+        async function loadWords() {
+            try {
+                const response = await fetch('words_with_translation_final.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    wordsData = data.words || [];
+                    console.log('Loaded words from external file:', wordsData.length);
+                } else {
+                    throw new Error('External file not found');
+                }
+            } catch (error) {
+                console.log('Using embedded words data');
+                // Embedded words data as fallback
+                wordsData = [
+                    {"en": "a/an", "ar": "أداة تنكير"},
+                    {"en": "about", "ar": "حول، عن"},
+                    {"en": "above", "ar": "فوق"},
+                    {"en": "across", "ar": "عبر"},
+                    {"en": "action", "ar": "عمل، فعل"},
+                    {"en": "activity", "ar": "نشاط"},
+                    {"en": "actor", "ar": "ممثل"},
+                    {"en": "actress", "ar": "ممثلة"},
+                    {"en": "add", "ar": "يضيف"},
+                    {"en": "address", "ar": "عنوان"},
+                    {"en": "adult", "ar": "بالغ"},
+                    {"en": "advice", "ar": "نصيحة"},
+                    {"en": "afraid", "ar": "خائف"},
+                    {"en": "after", "ar": "بعد"},
+                    {"en": "afternoon", "ar": "بعد الظهر"},
+                    {"en": "again", "ar": "مرة أخرى"},
+                    {"en": "age", "ar": "عمر"},
+                    {"en": "ago", "ar": "منذ"},
+                    {"en": "agree", "ar": "يوافق"},
+                    {"en": "air", "ar": "هواء"},
+                    {"en": "airport", "ar": "مطار"},
+                    {"en": "all", "ar": "كل"},
+                    {"en": "also", "ar": "أيضاً"},
+                    {"en": "always", "ar": "دائماً"},
+                    {"en": "amazing", "ar": "مذهل"},
+                    {"en": "and", "ar": "و"},
+                    {"en": "angry", "ar": "غاضب"},
+                    {"en": "animal", "ar": "حيوان"},
+                    {"en": "another", "ar": "آخر"},
+                    {"en": "answer", "ar": "جواب"},
+                    {"en": "any", "ar": "أي"},
+                    {"en": "anyone", "ar": "أي شخص"},
+                    {"en": "anything", "ar": "أي شيء"},
+                    {"en": "apartment", "ar": "شقة"},
+                    {"en": "apple", "ar": "تفاحة"},
+                    {"en": "April", "ar": "أبريل"},
+                    {"en": "area", "ar": "منطقة"},
+                    {"en": "arm", "ar": "ذراع"},
+                    {"en": "around", "ar": "حول"},
+                    {"en": "arrive", "ar": "يصل"},
+                    {"en": "art", "ar": "فن"},
+                    {"en": "article", "ar": "مقال"},
+                    {"en": "artist", "ar": "فنان"},
+                    {"en": "as", "ar": "كما"},
+                    {"en": "ask", "ar": "يسأل"},
+                    {"en": "at", "ar": "في"},
+                    {"en": "August", "ar": "أغسطس"},
+                    {"en": "aunt", "ar": "عمة"},
+                    {"en": "autumn", "ar": "خريف"},
+                    {"en": "away", "ar": "بعيداً"},
+                    {"en": "baby", "ar": "طفل"},
+                    {"en": "back", "ar": "ظهر، خلف"},
+                    {"en": "bad", "ar": "سيء"},
+                    {"en": "bag", "ar": "حقيبة"},
+                    {"en": "ball", "ar": "كرة"},
+                    {"en": "banana", "ar": "موز"},
+                    {"en": "band", "ar": "فرقة"},
+                    {"en": "bank (money)", "ar": "بنك"},
+                    {"en": "bath", "ar": "حمام"},
+                    {"en": "bathroom", "ar": "حمام"},
+                    {"en": "be", "ar": "يكون"},
+                    {"en": "beach", "ar": "شاطئ"},
+                    {"en": "beautiful", "ar": "جميل"},
+                    {"en": "because", "ar": "لأن"},
+                    {"en": "become", "ar": "يصبح"},
+                    {"en": "bed", "ar": "سرير"},
+                    {"en": "bedroom", "ar": "غرفة نوم"},
+                    {"en": "beer", "ar": "بيرة"},
+                    {"en": "before", "ar": "قبل"},
+                    {"en": "begin", "ar": "يبدأ"},
+                    {"en": "beginning", "ar": "بداية"},
+                    {"en": "behind", "ar": "خلف"},
+                    {"en": "believe", "ar": "يؤمن"},
+                    {"en": "below", "ar": "تحت"},
+                    {"en": "best", "ar": "أفضل"},
+                    {"en": "better", "ar": "أحسن"},
+                    {"en": "between", "ar": "بين"},
+                    {"en": "bicycle", "ar": "دراجة"},
+                    {"en": "big", "ar": "كبير"},
+                    {"en": "bike", "ar": "دراجة"},
+                    {"en": "bill", "ar": "فاتورة"},
+                    {"en": "bird", "ar": "طائر"},
+                    {"en": "birthday", "ar": "عيد ميلاد"},
+                    {"en": "black", "ar": "أسود"},
+                    {"en": "blog", "ar": "مدونة"},
+                    {"en": "blonde", "ar": "أشقر"},
+                    {"en": "blue", "ar": "أزرق"},
+                    {"en": "boat", "ar": "قارب"},
+                    {"en": "body", "ar": "جسم"},
+                    {"en": "book", "ar": "كتاب"},
+                    {"en": "boot", "ar": "حذاء"},
+                    {"en": "bored", "ar": "ملل"},
+                    {"en": "boring", "ar": "مملّ"},
+                    {"en": "born", "ar": "مولود"},
+                    {"en": "both", "ar": "كلاهما"},
+                    {"en": "bottle", "ar": "زجاجة"},
+                    {"en": "box", "ar": "صندوق"},
+                    {"en": "boy", "ar": "ولد"},
+                    {"en": "boyfriend", "ar": "صديق"},
+                    {"en": "bread", "ar": "خبز"},
+                    {"en": "break", "ar": "يكسر"},
+                    {"en": "breakfast", "ar": "إفطار"},
+                    {"en": "bring", "ar": "يحضر"},
+                    {"en": "brother", "ar": "أخ"},
+                    {"en": "brown", "ar": "بني"},
+                    {"en": "build", "ar": "يبني"},
+                    {"en": "building", "ar": "مبنى"},
+                    {"en": "bus", "ar": "حافلة"},
+                    {"en": "business", "ar": "عمل"},
+                    {"en": "busy", "ar": "مشغول"},
+                    {"en": "but", "ar": "لكن"},
+                    {"en": "butter", "ar": "زبدة"},
+                    {"en": "buy", "ar": "يشتري"},
+                    {"en": "by", "ar": "بواسطة"},
+                    {"en": "bye", "ar": "وداعاً"},
+                    {"en": "cafe", "ar": "مقهى"},
+                    {"en": "cake", "ar": "كعكة"},
+                    {"en": "call", "ar": "يتصل"},
+                    {"en": "camera", "ar": "كاميرا"},
+                    {"en": "can", "ar": "يستطيع"},
+                    {"en": "cannot", "ar": "لا يستطيع"},
+                    {"en": "capital", "ar": "عاصمة"},
+                    {"en": "car", "ar": "سيارة"},
+                    {"en": "card", "ar": "بطاقة"},
+                    {"en": "career", "ar": "مهنة"},
+                    {"en": "carrot", "ar": "جزر"},
+                    {"en": "carry", "ar": "يحمل"},
+                    {"en": "cat", "ar": "قطة"},
+                    {"en": "CD", "ar": "قرص مضغوط"},
+                    {"en": "cent", "ar": "سنت"},
+                    {"en": "centre", "ar": "مركز"},
+                    {"en": "century", "ar": "قرن"},
+                    {"en": "chair", "ar": "كرسي"},
+                    {"en": "change", "ar": "يغير"},
+                    {"en": "chart", "ar": "رسم بياني"},
+                    {"en": "cheap", "ar": "رخيص"},
+                    {"en": "check", "ar": "يفحص"},
+                    {"en": "cheese", "ar": "جبن"},
+                    {"en": "chicken", "ar": "دجاج"},
+                    {"en": "child", "ar": "طفل"},
+                    {"en": "chocolate", "ar": "شوكولاتة"},
+                    {"en": "choose", "ar": "يختار"},
+                    {"en": "cinema", "ar": "سينما"},
+                    {"en": "city", "ar": "مدينة"},
+                    {"en": "class", "ar": "فصل"},
+                    {"en": "classroom", "ar": "فصل دراسي"},
+                    {"en": "clean", "ar": "نظيف"},
+                    {"en": "climb", "ar": "يتسلق"},
+                    {"en": "clock", "ar": "ساعة"},
+                    {"en": "close", "ar": "يغلق"},
+                    {"en": "clothes", "ar": "ملابس"},
+                    {"en": "club", "ar": "نادي"},
+                    {"en": "coat", "ar": "معطف"},
+                    {"en": "coffee", "ar": "قهوة"},
+                    {"en": "cold", "ar": "بارد"},
+                    {"en": "college", "ar": "كلية"},
+                    {"en": "colour", "ar": "لون"},
+                    {"en": "come", "ar": "يأتي"},
+                    {"en": "common", "ar": "شائع"},
+                    {"en": "company", "ar": "شركة"},
+                    {"en": "compare", "ar": "يقارن"},
+                    {"en": "complete", "ar": "كامل"},
+                    {"en": "computer", "ar": "حاسوب"},
+                    {"en": "concert", "ar": "حفلة موسيقية"},
+                    {"en": "conversation", "ar": "محادثة"},
+                    {"en": "cook", "ar": "يطبخ"},
+                    {"en": "cooking", "ar": "طبخ"},
+                    {"en": "cool", "ar": "بارد"},
+                    {"en": "correct", "ar": "صحيح"},
+                    {"en": "cost", "ar": "تكلفة"},
+                    {"en": "could", "ar": "يمكن"},
+                    {"en": "country", "ar": "بلد"},
+                    {"en": "course", "ar": "دورة"},
+                    {"en": "cousin", "ar": "ابن عم"},
+                    {"en": "cow", "ar": "بقرة"},
+                    {"en": "cream", "ar": "كريم"},
+                    {"en": "create", "ar": "يخلق"},
+                    {"en": "culture", "ar": "ثقافة"},
+                    {"en": "cup", "ar": "كوب"},
+                    {"en": "customer", "ar": "زبون"},
+                    {"en": "cut", "ar": "يقطع"},
+                    {"en": "dad", "ar": "أب"},
+                    {"en": "dance", "ar": "يرقص"},
+                    {"en": "dancer", "ar": "راقص"},
+                    {"en": "dancing", "ar": "رقص"},
+                    {"en": "dangerous", "ar": "خطير"},
+                    {"en": "dark", "ar": "مظلم"},
+                    {"en": "date", "ar": "تاريخ"},
+                    {"en": "daughter", "ar": "ابنة"},
+                    {"en": "day", "ar": "يوم"},
+                    {"en": "dear", "ar": "عزيز"},
+                    {"en": "December", "ar": "ديسمبر"},
+                    {"en": "decide", "ar": "يقرر"},
+                    {"en": "delicious", "ar": "لذيذ"},
+                    {"en": "describe", "ar": "يصف"},
+                    {"en": "description", "ar": "وصف"},
+                    {"en": "design", "ar": "تصميم"},
+                    {"en": "desk", "ar": "مكتب"},
+                    {"en": "detail", "ar": "تفصيل"},
+                    {"en": "dialogue", "ar": "حوار"},
+                    {"en": "dictionary", "ar": "قاموس"},
+                    {"en": "die", "ar": "يموت"},
+                    {"en": "diet", "ar": "نظام غذائي"},
+                    {"en": "difference", "ar": "فرق"},
+                    {"en": "different", "ar": "مختلف"},
+                    {"en": "difficult", "ar": "صعب"},
+                    {"en": "dinner", "ar": "عشاء"},
+                    {"en": "dirty", "ar": "قذر"},
+                    {"en": "discuss", "ar": "يناقش"},
+                    {"en": "dish", "ar": "طبق"},
+                    {"en": "do", "ar": "يفعل"},
+                    {"en": "doctor", "ar": "طبيب"},
+                    {"en": "dog", "ar": "كلب"},
+                    {"en": "dollar", "ar": "دولار"},
+                    {"en": "door", "ar": "باب"},
+                    {"en": "down", "ar": "أسفل"},
+                    {"en": "downstairs", "ar": "الطابق السفلي"},
+                    {"en": "draw", "ar": "يرسم"},
+                    {"en": "dress", "ar": "فستان"},
+                    {"en": "drink", "ar": "يشرب"},
+                    {"en": "drive", "ar": "يقود"},
+                    {"en": "driver", "ar": "سائق"},
+                    {"en": "during", "ar": "أثناء"},
+                    {"en": "DVD", "ar": "قرص فيديو"},
+                    {"en": "each", "ar": "كل"},
+                    {"en": "ear", "ar": "أذن"},
+                    {"en": "early", "ar": "مبكر"},
+                    {"en": "east", "ar": "شرق"},
+                    {"en": "easy", "ar": "سهل"},
+                    {"en": "eat", "ar": "يأكل"},
+                    {"en": "egg", "ar": "بيضة"},
+                    {"en": "eight", "ar": "ثمانية"},
+                    {"en": "eighteen", "ar": "ثمانية عشر"},
+                    {"en": "eighty", "ar": "ثمانون"},
+                    {"en": "elephant", "ar": "فيل"},
+                    {"en": "eleven", "ar": "أحد عشر"},
+                    {"en": "else", "ar": "آخر"},
+                    {"en": "email", "ar": "بريد إلكتروني"},
+                    {"en": "employ", "ar": "يوظف"},
+                    {"en": "end", "ar": "نهاية"},
+                    {"en": "enjoy", "ar": "يستمتع"},
+                    {"en": "enough", "ar": "كافي"},
+                    {"en": "euro", "ar": "يورو"},
+                    {"en": "even", "ar": "حتى"},
+                    {"en": "evening", "ar": "مساء"},
+                    {"en": "event", "ar": "حدث"},
+                    {"en": "ever", "ar": "أبداً"},
+                    {"en": "every", "ar": "كل"},
+                    {"en": "everybody", "ar": "الجميع"},
+                    {"en": "everyone", "ar": "الجميع"},
+                    {"en": "everything", "ar": "كل شيء"},
+                    {"en": "exam", "ar": "امتحان"},
+                    {"en": "example", "ar": "مثال"},
+                    {"en": "excited", "ar": "متحمس"},
+                    {"en": "exciting", "ar": "مثير"},
+                    {"en": "exercise", "ar": "تمرين"},
+                    {"en": "expensive", "ar": "غالي"},
+                    {"en": "explain", "ar": "يشرح"},
+                    {"en": "extra", "ar": "إضافي"},
+                    {"en": "eye", "ar": "عين"},
+                    {"en": "face", "ar": "وجه"},
+                    {"en": "fact", "ar": "حقيقة"},
+                    {"en": "fall", "ar": "يسقط"},
+                    {"en": "false", "ar": "خاطئ"},
+                    {"en": "family", "ar": "عائلة"},
+                    {"en": "famous", "ar": "مشهور"},
+                    {"en": "fantastic", "ar": "رائع"},
+                    {"en": "far", "ar": "بعيد"},
+                    {"en": "farm", "ar": "مزرعة"},
+                    {"en": "farmer", "ar": "مزارع"},
+                    {"en": "fast", "ar": "سريع"},
+                    {"en": "fat", "ar": "سمين"},
+                    {"en": "father", "ar": "أب"},
+                    {"en": "favourite", "ar": "مفضل"},
+                    {"en": "February", "ar": "فبراير"},
+                    {"en": "feel", "ar": "يشعر"},
+                    {"en": "feeling", "ar": "شعور"},
+                    {"en": "festival", "ar": "مهرجان"},
+                    {"en": "few", "ar": "قليل"},
+                    {"en": "fifteen", "ar": "خمسة عشر"},
+                    {"en": "fifth", "ar": "خامس"},
+                    {"en": "fifty", "ar": "خمسون"},
+                    {"en": "fill", "ar": "يملأ"},
+                    {"en": "film", "ar": "فيلم"},
+                    {"en": "final", "ar": "نهائي"},
+                    {"en": "find", "ar": "يجد"},
+                    {"en": "fine", "ar": "جيد"},
+                    {"en": "finish", "ar": "ينهي"},
+                    {"en": "fire", "ar": "نار"},
+                    {"en": "first", "ar": "أول"},
+                    {"en": "fish", "ar": "سمك"},
+                    {"en": "five", "ar": "خمسة"},
+                    {"en": "flat", "ar": "شقة"},
+                    {"en": "flight", "ar": "رحلة"},
+                    {"en": "floor", "ar": "أرضية"},
+                    {"en": "flower", "ar": "زهرة"},
+                    {"en": "fly", "ar": "يطير"},
+                    {"en": "follow", "ar": "يتبع"},
+                    {"en": "food", "ar": "طعام"},
+                    {"en": "foot", "ar": "قدم"},
+                    {"en": "football", "ar": "كرة قدم"},
+                    {"en": "for", "ar": "لـ"},
+                    {"en": "forget", "ar": "ينسى"},
+                    {"en": "form", "ar": "شكل"},
+                    {"en": "forty", "ar": "أربعون"},
+                    {"en": "four", "ar": "أربعة"},
+                    {"en": "fourteen", "ar": "أربعة عشر"},
+                    {"en": "fourth", "ar": "رابع"},
+                    {"en": "free", "ar": "حر"},
+                    {"en": "Friday", "ar": "الجمعة"},
+                    {"en": "friend", "ar": "صديق"},
+                    {"en": "friendly", "ar": "ودود"},
+                    {"en": "from", "ar": "من"},
+                    {"en": "front", "ar": "أمام"},
+                    {"en": "fruit", "ar": "فاكهة"},
+                    {"en": "full", "ar": "ممتلئ"},
+                    {"en": "fun", "ar": "متعة"},
+                    {"en": "funny", "ar": "مضحك"},
+                    {"en": "future", "ar": "مستقبل"},
+                    {"en": "game", "ar": "لعبة"},
+                    {"en": "garden", "ar": "حديقة"},
+                    {"en": "geography", "ar": "جغرافيا"},
+                    {"en": "get", "ar": "يحصل"},
+                    {"en": "girl", "ar": "فتاة"},
+                    {"en": "girlfriend", "ar": "صديقة"},
+                    {"en": "give", "ar": "يعطي"},
+                    {"en": "glass", "ar": "زجاج"},
+                    {"en": "go", "ar": "يذهب"},
+                    {"en": "good", "ar": "جيد"},
+                    {"en": "goodbye", "ar": "وداعاً"},
+                    {"en": "grandfather", "ar": "جد"},
+                    {"en": "grandmother", "ar": "جدة"},
+                    {"en": "grandparent", "ar": "جد أو جدة"},
+                    {"en": "great", "ar": "عظيم"},
+                    {"en": "green", "ar": "أخضر"},
+                    {"en": "grey", "ar": "رمادي"},
+                    {"en": "group", "ar": "مجموعة"},
+                    {"en": "grow", "ar": "ينمو"},
+                    {"en": "guess", "ar": "يخمن"},
+                    {"en": "guitar", "ar": "جيتار"},
+                    {"en": "gym", "ar": "صالة رياضية"},
+                    {"en": "hair", "ar": "شعر"},
+                    {"en": "half", "ar": "نصف"},
+                    {"en": "hand", "ar": "يد"},
+                    {"en": "happen", "ar": "يحدث"},
+                    {"en": "happy", "ar": "سعيد"},
+                    {"en": "hard", "ar": "صعب"},
+                    {"en": "hat", "ar": "قبعة"},
+                    {"en": "hate", "ar": "يكره"},
+                    {"en": "have", "ar": "يملك"},
+                    {"en": "have to", "ar": "يجب"},
+                    {"en": "he", "ar": "هو"},
+                    {"en": "head", "ar": "رأس"},
+                    {"en": "health", "ar": "صحة"},
+                    {"en": "healthy", "ar": "صحي"},
+                    {"en": "hear", "ar": "يسمع"},
+                    {"en": "hello", "ar": "مرحبا"},
+                    {"en": "help", "ar": "يساعد"},
+                    {"en": "her", "ar": "لها"},
+                    {"en": "here", "ar": "هنا"},
+                    {"en": "hey", "ar": "مرحبا"},
+                    {"en": "hi", "ar": "مرحبا"},
+                    {"en": "high", "ar": "عالي"},
+                    {"en": "him", "ar": "له"},
+                    {"en": "his", "ar": "له"},
+                    {"en": "history", "ar": "تاريخ"},
+                    {"en": "hobby", "ar": "هواية"},
+                    {"en": "holiday", "ar": "عطلة"},
+                    {"en": "home", "ar": "منزل"},
+                    {"en": "homework", "ar": "واجب منزلي"},
+                    {"en": "hope", "ar": "أمل"},
+                    {"en": "horse", "ar": "حصان"},
+                    {"en": "hospital", "ar": "مستشفى"},
+                    {"en": "hot", "ar": "حار"},
+                    {"en": "hotel", "ar": "فندق"},
+                    {"en": "hour", "ar": "ساعة"},
+                    {"en": "house", "ar": "منزل"},
+                    {"en": "how", "ar": "كيف"},
+                    {"en": "however", "ar": "لكن"},
+                    {"en": "hundred", "ar": "مائة"},
+                    {"en": "hungry", "ar": "جائع"},
+                    {"en": "husband", "ar": "زوج"},
+                    {"en": "I", "ar": "أنا"},
+                    {"en": "ice", "ar": "ثلج"},
+                    {"en": "ice cream", "ar": "آيس كريم"},
+                    {"en": "idea", "ar": "فكرة"},
+                    {"en": "if", "ar": "إذا"},
+                    {"en": "imagine", "ar": "يتخيل"},
+                    {"en": "important", "ar": "مهم"},
+                    {"en": "improve", "ar": "يحسن"},
+                    {"en": "in", "ar": "في"},
+                    {"en": "include", "ar": "يشمل"},
+                    {"en": "information", "ar": "معلومات"},
+                    {"en": "interest", "ar": "اهتمام"},
+                    {"en": "interested", "ar": "مهتم"},
+                    {"en": "interesting", "ar": "مثير للاهتمام"},
+                    {"en": "internet", "ar": "إنترنت"},
+                    {"en": "interview", "ar": "مقابلة"},
+                    {"en": "into", "ar": "إلى"},
+                    {"en": "introduce", "ar": "يقدم"},
+                    {"en": "island", "ar": "جزيرة"},
+                    {"en": "it", "ar": "هو/هي"},
+                    {"en": "its", "ar": "له/لها"},
+                    {"en": "jacket", "ar": "سترة"},
+                    {"en": "January", "ar": "يناير"},
+                    {"en": "jeans", "ar": "جينز"},
+                    {"en": "job", "ar": "وظيفة"},
+                    {"en": "join", "ar": "ينضم"},
+                    {"en": "journey", "ar": "رحلة"},
+                    {"en": "juice", "ar": "عصير"},
+                    {"en": "July", "ar": "يوليو"},
+                    {"en": "June", "ar": "يونيو"},
+                    {"en": "just", "ar": "فقط"},
+                    {"en": "keep", "ar": "يحتفظ"},
+                    {"en": "key", "ar": "مفتاح"},
+                    {"en": "kilometre", "ar": "كيلومتر"},
+                    {"en": "kind (type)", "ar": "نوع"},
+                    {"en": "kitchen", "ar": "مطبخ"},
+                    {"en": "know", "ar": "يعرف"},
+                    {"en": "land", "ar": "أرض"},
+                    {"en": "language", "ar": "لغة"},
+                    {"en": "large", "ar": "كبير"},
+                    {"en": "last (final)", "ar": "أخير"},
+                    {"en": "late", "ar": "متأخر"},
+                    {"en": "later", "ar": "لاحقاً"},
+                    {"en": "laugh", "ar": "يضحك"},
+                    {"en": "learn", "ar": "يتعلم"},
+                    {"en": "leave", "ar": "يترك"},
+                    {"en": "left", "ar": "يسار"},
+                    {"en": "leg", "ar": "ساق"},
+                    {"en": "lesson", "ar": "درس"},
+                    {"en": "let", "ar": "يدع"},
+                    {"en": "letter", "ar": "رسالة"},
+                    {"en": "library", "ar": "مكتبة"},
+                    {"en": "lie", "ar": "يكذب"},
+                    {"en": "life", "ar": "حياة"},
+                    {"en": "light (from the sun/a lamp)", "ar": "ضوء"},
+                    {"en": "like (similar)", "ar": "مثل"},
+                    {"en": "like (find sb/sth pleasant)", "ar": "يحب"},
+                    {"en": "line", "ar": "خط"},
+                    {"en": "lion", "ar": "أسد"},
+                    {"en": "list", "ar": "قائمة"},
+                    {"en": "listen", "ar": "يستمع"},
+                    {"en": "little", "ar": "قليل"},
+                    {"en": "live", "ar": "يعيش"},
+                    {"en": "local", "ar": "محلي"},
+                    {"en": "long", "ar": "طويل"},
+                    {"en": "look", "ar": "ينظر"},
+                    {"en": "lose", "ar": "يخسر"},
+                    {"en": "lot", "ar": "كثير"},
+                    {"en": "love", "ar": "حب"},
+                    {"en": "lunch", "ar": "غداء"},
+                    {"en": "machine", "ar": "آلة"},
+                    {"en": "magazine", "ar": "مجلة"},
+                    {"en": "main", "ar": "رئيسي"},
+                    {"en": "make", "ar": "يصنع"},
+                    {"en": "man", "ar": "رجل"},
+                    {"en": "many", "ar": "كثير"},
+                    {"en": "map", "ar": "خريطة"},
+                    {"en": "March", "ar": "مارس"},
+                    {"en": "market", "ar": "سوق"},
+                    {"en": "married", "ar": "متزوج"},
+                    {"en": "match (contest)", "ar": "مباراة"},
+                    {"en": "May", "ar": "مايو"},
+                    {"en": "maybe", "ar": "ربما"},
+                    {"en": "me", "ar": "أنا"},
+                    {"en": "meal", "ar": "وجبة"},
+                    {"en": "mean", "ar": "يعني"},
+                    {"en": "meaning", "ar": "معنى"},
+                    {"en": "meat", "ar": "لحم"},
+                    {"en": "meet", "ar": "يلتقي"},
+                    {"en": "meeting", "ar": "اجتماع"},
+                    {"en": "member", "ar": "عضو"},
+                    {"en": "menu", "ar": "قائمة طعام"},
+                    {"en": "message", "ar": "رسالة"},
+                    {"en": "metre", "ar": "متر"},
+                    {"en": "midnight", "ar": "منتصف الليل"},
+                    {"en": "mile", "ar": "ميل"},
+                    {"en": "milk", "ar": "حليب"},
+                    {"en": "million", "ar": "مليون"},
+                    {"en": "minute", "ar": "دقيقة"},
+                    {"en": "miss", "ar": "يفتقد"},
+                    {"en": "mistake", "ar": "خطأ"},
+                    {"en": "model", "ar": "نموذج"},
+                    {"en": "modern", "ar": "حديث"},
+                    {"en": "moment", "ar": "لحظة"},
+                    {"en": "Monday", "ar": "الاثنين"},
+                    {"en": "money", "ar": "مال"},
+                    {"en": "month", "ar": "شهر"},
+                    {"en": "more", "ar": "أكثر"},
+                    {"en": "morning", "ar": "صباح"},
+                    {"en": "most", "ar": "معظم"},
+                    {"en": "mother", "ar": "أم"},
+                    {"en": "mountain", "ar": "جبل"},
+                    {"en": "mouse", "ar": "فأر"},
+                    {"en": "mouth", "ar": "فم"},
+                    {"en": "move", "ar": "يتحرك"},
+                    {"en": "movie", "ar": "فيلم"},
+                    {"en": "much", "ar": "كثير"},
+                    {"en": "mum", "ar": "أم"},
+                    {"en": "museum", "ar": "متحف"},
+                    {"en": "music", "ar": "موسيقى"},
+                    {"en": "must", "ar": "يجب"},
+                    {"en": "my", "ar": "لي"},
+                    {"en": "name", "ar": "اسم"},
+                    {"en": "natural", "ar": "طبيعي"},
+                    {"en": "near", "ar": "قريب"},
+                    {"en": "need", "ar": "يحتاج"},
+                    {"en": "negative", "ar": "سلبي"},
+                    {"en": "neighbour", "ar": "جار"},
+                    {"en": "never", "ar": "أبداً"},
+                    {"en": "new", "ar": "جديد"},
+                    {"en": "news", "ar": "أخبار"},
+                    {"en": "newspaper", "ar": "جريدة"},
+                    {"en": "next", "ar": "التالي"},
+                    {"en": "next to", "ar": "بجانب"},
+                    {"en": "nice", "ar": "لطيف"},
+                    {"en": "night", "ar": "ليل"},
+                    {"en": "nine", "ar": "تسعة"},
+                    {"en": "nineteen", "ar": "تسعة عشر"},
+                    {"en": "ninety", "ar": "تسعون"},
+                    {"en": "no", "ar": "لا"},
+                    {"en": "no one", "ar": "لا أحد"},
+                    {"en": "nobody", "ar": "لا أحد"},
+                    {"en": "north", "ar": "شمال"},
+                    {"en": "nose", "ar": "أنف"},
+                    {"en": "not", "ar": "ليس"},
+                    {"en": "note", "ar": "ملاحظة"},
+                    {"en": "nothing", "ar": "لا شيء"},
+                    {"en": "November", "ar": "نوفمبر"},
+                    {"en": "now", "ar": "الآن"},
+                    {"en": "number", "ar": "رقم"},
+                    {"en": "nurse", "ar": "ممرضة"},
+                    {"en": "object", "ar": "شيء"},
+                    {"en": "o'clock", "ar": "الساعة"},
+                    {"en": "October", "ar": "أكتوبر"},
+                    {"en": "of", "ar": "من"},
+                    {"en": "off", "ar": "مطفأ"},
+                    {"en": "office", "ar": "مكتب"},
+                    {"en": "often", "ar": "غالباً"},
+                    {"en": "oh", "ar": "أوه"},
+                    {"en": "OK", "ar": "حسناً"},
+                    {"en": "old", "ar": "قديم"},
+                    {"en": "on", "ar": "على"},
+                    {"en": "once", "ar": "مرة واحدة"},
+                    {"en": "one", "ar": "واحد"},
+                    {"en": "onion", "ar": "بصل"},
+                    {"en": "online", "ar": "على الإنترنت"},
+                    {"en": "only", "ar": "فقط"},
+                    {"en": "open", "ar": "يفتح"},
+                    {"en": "opinion", "ar": "رأي"},
+                    {"en": "opposite", "ar": "مقابل"},
+                    {"en": "or", "ar": "أو"},
+                    {"en": "orange", "ar": "برتقالي"},
+                    {"en": "order", "ar": "طلب"},
+                    {"en": "other", "ar": "آخر"},
+                    {"en": "our", "ar": "لنا"},
+                    {"en": "out", "ar": "خارج"},
+                    {"en": "outside", "ar": "خارج"},
+                    {"en": "over", "ar": "فوق"},
+                    {"en": "own", "ar": "يملك"},
+                    {"en": "page", "ar": "صفحة"},
+                    {"en": "paint", "ar": "يرسم"},
+                    {"en": "painting", "ar": "لوحة"},
+                    {"en": "pair", "ar": "زوج"},
+                    {"en": "paper", "ar": "ورق"},
+                    {"en": "paragraph", "ar": "فقرة"},
+                    {"en": "parent", "ar": "والد"},
+                    {"en": "park", "ar": "حديقة"},
+                    {"en": "part", "ar": "جزء"},
+                    {"en": "partner", "ar": "شريك"},
+                    {"en": "party", "ar": "حفلة"},
+                    {"en": "passport", "ar": "جواز سفر"},
+                    {"en": "past", "ar": "ماضي"},
+                    {"en": "pay", "ar": "يدفع"},
+                    {"en": "pen", "ar": "قلم"},
+                    {"en": "pencil", "ar": "قلم رصاص"},
+                    {"en": "people", "ar": "ناس"},
+                    {"en": "pepper", "ar": "فلفل"},
+                    {"en": "perfect", "ar": "مثالي"},
+                    {"en": "period", "ar": "فترة"},
+                    {"en": "person", "ar": "شخص"},
+                    {"en": "personal", "ar": "شخصي"},
+                    {"en": "phone", "ar": "هاتف"},
+                    {"en": "photo", "ar": "صورة"},
+                    {"en": "photograph", "ar": "صورة فوتوغرافية"},
+                    {"en": "phrase", "ar": "عبارة"},
+                    {"en": "piano", "ar": "بيانو"},
+                    {"en": "picture", "ar": "صورة"},
+                    {"en": "piece", "ar": "قطعة"},
+                    {"en": "pig", "ar": "خنزير"},
+                    {"en": "pink", "ar": "وردي"},
+                    {"en": "place", "ar": "مكان"},
+                    {"en": "plan", "ar": "خطة"},
+                    {"en": "plane", "ar": "طائرة"},
+                    {"en": "plant", "ar": "نبات"},
+                    {"en": "play", "ar": "يلعب"},
+                    {"en": "player", "ar": "لاعب"},
+                    {"en": "please", "ar": "من فضلك"},
+                    {"en": "point", "ar": "نقطة"},
+                    {"en": "police", "ar": "شرطة"},
+                    {"en": "policeman", "ar": "شرطي"},
+                    {"en": "pool", "ar": "مسبح"},
+                    {"en": "poor", "ar": "فقير"},
+                    {"en": "popular", "ar": "شائع"},
+                    {"en": "positive", "ar": "إيجابي"},
+                    {"en": "possible", "ar": "ممكن"},
+                    {"en": "post", "ar": "بريد"},
+                    {"en": "potato", "ar": "بطاطس"},
+                    {"en": "pound", "ar": "جنيه"},
+                    {"en": "practice", "ar": "ممارسة"},
+                    {"en": "practise", "ar": "يمارس"},
+                    {"en": "prefer", "ar": "يفضل"},
+                    {"en": "prepare", "ar": "يحضر"},
+                    {"en": "present", "ar": "هدية"},
+                    {"en": "pretty", "ar": "جميل"},
+                    {"en": "price", "ar": "سعر"},
+                    {"en": "probably", "ar": "ربما"},
+                    {"en": "problem", "ar": "مشكلة"},
+                    {"en": "product", "ar": "منتج"},
+                    {"en": "programme", "ar": "برنامج"},
+                    {"en": "project", "ar": "مشروع"},
+                    {"en": "purple", "ar": "بنفسجي"},
+                    {"en": "put", "ar": "يضع"},
+                    {"en": "quarter", "ar": "ربع"},
+                    {"en": "question", "ar": "سؤال"},
+                    {"en": "quick", "ar": "سريع"},
+                    {"en": "quickly", "ar": "بسرعة"},
+                    {"en": "quiet", "ar": "هادئ"},
+                    {"en": "quite", "ar": "تماماً"},
+                    {"en": "radio", "ar": "راديو"},
+                    {"en": "rain", "ar": "مطر"},
+                    {"en": "read", "ar": "يقرأ"},
+                    {"en": "reader", "ar": "قارئ"},
+                    {"en": "reading", "ar": "قراءة"},
+                    {"en": "ready", "ar": "جاهز"},
+                    {"en": "real", "ar": "حقيقي"},
+                    {"en": "really", "ar": "حقاً"},
+                    {"en": "reason", "ar": "سبب"},
+                    {"en": "red", "ar": "أحمر"},
+                    {"en": "relax", "ar": "يسترخي"},
+                    {"en": "remember", "ar": "يتذكر"},
+                    {"en": "repeat", "ar": "يكرر"},
+                    {"en": "report", "ar": "تقرير"},
+                    {"en": "restaurant", "ar": "مطعم"},
+                    {"en": "result", "ar": "نتيجة"},
+                    {"en": "return", "ar": "يعود"},
+                    {"en": "rice", "ar": "أرز"},
+                    {"en": "rich", "ar": "غني"},
+                    {"en": "ride", "ar": "يركب"},
+                    {"en": "right", "ar": "يمين"},
+                    {"en": "river", "ar": "نهر"},
+                    {"en": "road", "ar": "طريق"},
+                    {"en": "room", "ar": "غرفة"},
+                    {"en": "routine", "ar": "روتين"},
+                    {"en": "rule", "ar": "قاعدة"},
+                    {"en": "run", "ar": "يجري"},
+                    {"en": "sad", "ar": "حزين"},
+                    {"en": "salad", "ar": "سلطة"},
+                    {"en": "salt", "ar": "ملح"},
+                    {"en": "same", "ar": "نفس"},
+                    {"en": "sandwich", "ar": "ساندويتش"},
+                    {"en": "Saturday", "ar": "السبت"},
+                    {"en": "say", "ar": "يقول"},
+                    {"en": "school", "ar": "مدرسة"},
+                    {"en": "science", "ar": "علم"},
+                    {"en": "scientist", "ar": "عالم"},
+                    {"en": "sea", "ar": "بحر"},
+                    {"en": "second", "ar": "ثاني"},
+                    {"en": "section", "ar": "قسم"},
+                    {"en": "see", "ar": "يرى"},
+                    {"en": "sell", "ar": "يبيع"},
+                    {"en": "send", "ar": "يرسل"},
+                    {"en": "sentence", "ar": "جملة"},
+                    {"en": "September", "ar": "سبتمبر"},
+                    {"en": "seven", "ar": "سبعة"},
+                    {"en": "seventeen", "ar": "سبعة عشر"},
+                    {"en": "seventy", "ar": "سبعون"},
+                    {"en": "share", "ar": "يشارك"},
+                    {"en": "she", "ar": "هي"},
+                    {"en": "sheep", "ar": "خروف"},
+                    {"en": "shirt", "ar": "قميص"},
+                    {"en": "shoe", "ar": "حذاء"},
+                    {"en": "shop", "ar": "متجر"},
+                    {"en": "shopping", "ar": "تسوق"},
+                    {"en": "short", "ar": "قصير"},
+                    {"en": "should", "ar": "يجب"},
+                    {"en": "show", "ar": "يظهر"},
+                    {"en": "shower", "ar": "دش"},
+                    {"en": "sick", "ar": "مريض"},
+                    {"en": "similar", "ar": "مشابه"},
+                    {"en": "sing", "ar": "يغني"},
+                    {"en": "singer", "ar": "مغني"},
+                    {"en": "sister", "ar": "أخت"},
+                    {"en": "sit", "ar": "يجلس"},
+                    {"en": "situation", "ar": "موقف"},
+                    {"en": "six", "ar": "ستة"},
+                    {"en": "sixteen", "ar": "ستة عشر"},
+                    {"en": "sixty", "ar": "ستون"},
+                    {"en": "skill", "ar": "مهارة"},
+                    {"en": "skirt", "ar": "تنورة"},
+                    {"en": "sleep", "ar": "ينام"},
+                    {"en": "slow", "ar": "بطيء"},
+                    {"en": "small", "ar": "صغير"},
+                    {"en": "snake", "ar": "ثعبان"},
+                    {"en": "snow", "ar": "ثلج"},
+                    {"en": "so", "ar": "لذلك"},
+                    {"en": "some", "ar": "بعض"},
+                    {"en": "somebody", "ar": "شخص ما"},
+                    {"en": "someone", "ar": "شخص ما"},
+                    {"en": "something", "ar": "شيء ما"},
+                    {"en": "sometimes", "ar": "أحياناً"},
+                    {"en": "son", "ar": "ابن"},
+                    {"en": "song", "ar": "أغنية"},
+                    {"en": "soon", "ar": "قريباً"},
+                    {"en": "sorry", "ar": "آسف"},
+                    {"en": "sound", "ar": "صوت"},
+                    {"en": "soup", "ar": "شوربة"},
+                    {"en": "south", "ar": "جنوب"},
+                    {"en": "space", "ar": "مساحة"},
+                    {"en": "speak", "ar": "يتكلم"},
+                    {"en": "special", "ar": "خاص"},
+                    {"en": "spell", "ar": "يتهجى"},
+                    {"en": "spelling", "ar": "إملاء"},
+                    {"en": "spend", "ar": "يقضي"},
+                    {"en": "sport", "ar": "رياضة"},
+                    {"en": "spring", "ar": "ربيع"},
+                    {"en": "stand", "ar": "يقف"},
+                    {"en": "star", "ar": "نجمة"},
+                    {"en": "start", "ar": "يبدأ"},
+                    {"en": "statement", "ar": "بيان"},
+                    {"en": "station", "ar": "محطة"},
+                    {"en": "stay", "ar": "يبقى"},
+                    {"en": "still", "ar": "ما زال"},
+                    {"en": "stop", "ar": "يتوقف"},
+                    {"en": "story", "ar": "قصة"},
+                    {"en": "street", "ar": "شارع"},
+                    {"en": "strong", "ar": "قوي"},
+                    {"en": "student", "ar": "طالب"},
+                    {"en": "study", "ar": "يدرس"},
+                    {"en": "style", "ar": "أسلوب"},
+                    {"en": "subject", "ar": "موضوع"},
+                    {"en": "success", "ar": "نجاح"},
+                    {"en": "sugar", "ar": "سكر"},
+                    {"en": "summer", "ar": "صيف"},
+                    {"en": "sun", "ar": "شمس"},
+                    {"en": "Sunday", "ar": "الأحد"},
+                    {"en": "supermarket", "ar": "سوبر ماركت"},
+                    {"en": "sure", "ar": "متأكد"},
+                    {"en": "sweater", "ar": "كنزة"},
+                    {"en": "swim", "ar": "يسبح"},
+                    {"en": "swimming", "ar": "سباحة"},
+                    {"en": "table", "ar": "طاولة"},
+                    {"en": "take", "ar": "يأخذ"},
+                    {"en": "talk", "ar": "يتكلم"},
+                    {"en": "tall", "ar": "طويل"},
+                    {"en": "taxi", "ar": "تاكسي"},
+                    {"en": "tea", "ar": "شاي"},
+                    {"en": "teach", "ar": "يعلم"},
+                    {"en": "teacher", "ar": "معلم"},
+                    {"en": "team", "ar": "فريق"},
+                    {"en": "teenager", "ar": "مراهق"},
+                    {"en": "telephone", "ar": "هاتف"},
+                    {"en": "television", "ar": "تلفزيون"},
+                    {"en": "tell", "ar": "يخبر"},
+                    {"en": "ten", "ar": "عشرة"},
+                    {"en": "tennis", "ar": "تنس"},
+                    {"en": "terrible", "ar": "فظيع"},
+                    {"en": "test", "ar": "اختبار"},
+                    {"en": "text", "ar": "نص"},
+                    {"en": "than", "ar": "من"},
+                    {"en": "thank", "ar": "يشكر"},
+                    {"en": "thanks", "ar": "شكراً"},
+                    {"en": "that", "ar": "ذلك"},
+                    {"en": "the", "ar": "الـ"},
+                    {"en": "theatre", "ar": "مسرح"},
+                    {"en": "their", "ar": "لهم"},
+                    {"en": "them", "ar": "لهم"},
+                    {"en": "then", "ar": "ثم"},
+                    {"en": "there", "ar": "هناك"},
+                    {"en": "they", "ar": "هم"},
+                    {"en": "thing", "ar": "شيء"},
+                    {"en": "think", "ar": "يفكر"},
+                    {"en": "third", "ar": "ثالث"},
+                    {"en": "thirsty", "ar": "عطشان"},
+                    {"en": "thirteen", "ar": "ثلاثة عشر"},
+                    {"en": "thirty", "ar": "ثلاثون"},
+                    {"en": "this", "ar": "هذا"},
+                    {"en": "thousand", "ar": "ألف"},
+                    {"en": "three", "ar": "ثلاثة"},
+                    {"en": "through", "ar": "عبر"},
+                    {"en": "Thursday", "ar": "الخميس"},
+                    {"en": "ticket", "ar": "تذكرة"},
+                    {"en": "time", "ar": "وقت"},
+                    {"en": "tired", "ar": "متعب"},
+                    {"en": "title", "ar": "عنوان"},
+                    {"en": "to", "ar": "إلى"},
+                    {"en": "today", "ar": "اليوم"},
+                    {"en": "together", "ar": "معاً"},
+                    {"en": "toilet", "ar": "مرحاض"},
+                    {"en": "tomato", "ar": "طماطم"},
+                    {"en": "tomorrow", "ar": "غداً"},
+                    {"en": "tonight", "ar": "الليلة"},
+                    {"en": "too", "ar": "أيضاً"},
+                    {"en": "tooth", "ar": "سن"},
+                    {"en": "topic", "ar": "موضوع"},
+                    {"en": "tourist", "ar": "سائح"},
+                    {"en": "town", "ar": "بلدة"},
+                    {"en": "traffic", "ar": "مرور"},
+                    {"en": "train", "ar": "قطار"},
+                    {"en": "travel", "ar": "يسافر"},
+                    {"en": "tree", "ar": "شجرة"},
+                    {"en": "trip", "ar": "رحلة"},
+                    {"en": "trousers", "ar": "بنطلون"},
+                    {"en": "true", "ar": "صحيح"},
+                    {"en": "try", "ar": "يحاول"},
+                    {"en": "T-shirt", "ar": "تي شيرت"},
+                    {"en": "Tuesday", "ar": "الثلاثاء"},
+                    {"en": "turn", "ar": "يدور"},
+                    {"en": "TV", "ar": "تلفزيون"},
+                    {"en": "twelve", "ar": "اثنا عشر"},
+                    {"en": "twenty", "ar": "عشرون"},
+                    {"en": "twice", "ar": "مرتين"},
+                    {"en": "two", "ar": "اثنان"},
+                    {"en": "type", "ar": "نوع"},
+                    {"en": "umbrella", "ar": "مظلة"},
+                    {"en": "uncle", "ar": "عم"},
+                    {"en": "under", "ar": "تحت"},
+                    {"en": "understand", "ar": "يفهم"},
+                    {"en": "university", "ar": "جامعة"},
+                    {"en": "until", "ar": "حتى"},
+                    {"en": "up", "ar": "أعلى"},
+                    {"en": "upstairs", "ar": "الطابق العلوي"},
+                    {"en": "us", "ar": "نحن"},
+                    {"en": "use", "ar": "يستخدم"},
+                    {"en": "useful", "ar": "مفيد"},
+                    {"en": "usually", "ar": "عادة"},
+                    {"en": "vacation", "ar": "عطلة"},
+                    {"en": "vegetable", "ar": "خضار"},
+                    {"en": "very", "ar": "جداً"},
+                    {"en": "video", "ar": "فيديو"},
+                    {"en": "village", "ar": "قرية"},
+                    {"en": "visit", "ar": "يزور"},
+                    {"en": "visitor", "ar": "زائر"},
+                    {"en": "wait", "ar": "ينتظر"},
+                    {"en": "waiter", "ar": "نادل"},
+                    {"en": "wake", "ar": "يستيقظ"},
+                    {"en": "walk", "ar": "يمشي"},
+                    {"en": "wall", "ar": "جدار"},
+                    {"en": "want", "ar": "يريد"},
+                    {"en": "warm", "ar": "دافئ"},
+                    {"en": "wash", "ar": "يغسل"},
+                    {"en": "watch", "ar": "يشاهد"},
+                    {"en": "water", "ar": "ماء"},
+                    {"en": "way", "ar": "طريق"},
+                    {"en": "we", "ar": "نحن"},
+                    {"en": "wear", "ar": "يلبس"},
+                    {"en": "weather", "ar": "طقس"},
+                    {"en": "website", "ar": "موقع إلكتروني"},
+                    {"en": "Wednesday", "ar": "الأربعاء"},
+                    {"en": "week", "ar": "أسبوع"},
+                    {"en": "weekend", "ar": "نهاية الأسبوع"},
+                    {"en": "welcome", "ar": "أهلاً وسهلاً"},
+                    {"en": "well", "ar": "جيد"},
+                    {"en": "west", "ar": "غرب"},
+                    {"en": "what", "ar": "ماذا"},
+                    {"en": "when", "ar": "متى"},
+                    {"en": "where", "ar": "أين"},
+                    {"en": "which", "ar": "أي"},
+                    {"en": "white", "ar": "أبيض"},
+                    {"en": "who", "ar": "من"},
+                    {"en": "why", "ar": "لماذا"},
+                    {"en": "wife", "ar": "زوجة"},
+                    {"en": "will", "ar": "سوف"},
+                    {"en": "win", "ar": "يفوز"},
+                    {"en": "window", "ar": "نافذة"},
+                    {"en": "wine", "ar": "نبيذ"},
+                    {"en": "winter", "ar": "شتاء"},
+                    {"en": "with", "ar": "مع"},
+                    {"en": "without", "ar": "بدون"},
+                    {"en": "woman", "ar": "امرأة"},
+                    {"en": "wonderful", "ar": "رائع"},
+                    {"en": "word", "ar": "كلمة"},
+                    {"en": "work", "ar": "يعمل"},
+                    {"en": "worker", "ar": "عامل"},
+                    {"en": "world", "ar": "عالم"},
+                    {"en": "would", "ar": "سوف"},
+                    {"en": "write", "ar": "يكتب"},
+                    {"en": "writer", "ar": "كاتب"},
+                    {"en": "writing", "ar": "كتابة"},
+                    {"en": "wrong", "ar": "خاطئ"},
+                    {"en": "yeah", "ar": "نعم"},
+                    {"en": "year", "ar": "سنة"},
+                    {"en": "yellow", "ar": "أصفر"},
+                    {"en": "yes", "ar": "نعم"},
+                    {"en": "yesterday", "ar": "أمس"},
+                    {"en": "you", "ar": "أنت"},
+                    {"en": "young", "ar": "شاب"},
+                    {"en": "your", "ar": "لك"},
+                    {"en": "yourself", "ar": "نفسك"}
+                ];
+            }
+        }
+
+        // Function to check if a word is a proper noun
+        function isProperNoun(word) {
+            const lowerWord = word.toLowerCase();
+            return properNouns.includes(lowerWord);
+        }
+
+        // Function to get the root word by removing common suffixes and prefixes
+        function getRootWord(word) {
+            let root = word.toLowerCase();
+            
+            // Remove common prefixes
+            for (const prefix of derivationalPrefixes) {
+                if (root.startsWith(prefix) && root.length > prefix.length + 2) {
+                    root = root.substring(prefix.length);
+                    break;
+                }
+            }
+            
+            // Remove common suffixes
+            for (const suffix of derivationalSuffixes) {
+                if (root.endsWith(suffix) && root.length > suffix.length + 2) {
+                    root = root.substring(0, root.length - suffix.length);
+                    break;
+                }
+            }
+            
+            return root;
+        }
+
+        // Function to check if a word is a derivative of any selected word
+        function isDerivativeOfSelected(word) {
+            const wordRoot = getRootWord(word);
+            
+            for (const selectedWord of selectedWords) {
+                const selectedRoot = getRootWord(selectedWord.en);
+                
+                // Check if roots are similar (allowing for minor variations)
+                if (wordRoot === selectedRoot || 
+                    Math.abs(wordRoot.length - selectedRoot.length) <= 1 && 
+                    (wordRoot.includes(selectedRoot) || selectedRoot.includes(wordRoot))) {
+                    return selectedWord.en;
+                }
+            }
+            
+            return null;
+        }
+
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const suggestions = document.getElementById('suggestions');
+        const wordsGrid = document.getElementById('wordsGrid');
+        const wordCount = document.getElementById('wordCount');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const addWordHint = document.getElementById('addWordHint');
+
+        // Initialize the app
+        async function init() {
+            await loadWords();
+            updateDisplay();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('keydown', handleKeyDown);
+            resetBtn.addEventListener('click', resetGame);
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-container')) {
+                    hideSuggestions();
+                    hideAddWordHint();
+                }
+            });
+        }
+
+        function handleSearch(e) {
+            const query = e.target.value.trim().toLowerCase();
+            
+            if (query.length === 0) {
+                hideSuggestions();
+                hideAddWordHint();
+                clearInputStyles();
+                return;
+            }
+
+            // Check if the current input matches a selected word exactly
+            const exactMatch = selectedWords.find(word => word.en.toLowerCase() === query);
+            if (exactMatch) {
+                searchInput.classList.add('duplicate');
+                showStatusMessage('هذه الكلمة موجودة بالفعل في قائمتك!', 'error');
+                hideAddWordHint();
+                return;
+            }
+
+            // Check if it's a proper noun
+            if (isProperNoun(query)) {
+                searchInput.classList.add('blocked');
+                showStatusMessage('أسماء العلم غير مسموحة في هذه اللعبة!', 'warning');
+                hideAddWordHint();
+                return;
+            }
+
+            // Check if it's a derivative of a selected word
+            const derivativeOf = isDerivativeOfSelected(query);
+            if (derivativeOf) {
+                searchInput.classList.add('blocked');
+                showStatusMessage(`هذه الكلمة مشتقة من "${derivativeOf}" الموجودة في قائمتك!`, 'warning');
+                hideAddWordHint();
+                return;
+            }
+
+            clearInputStyles();
+            hideStatusMessage();
+            
+            // Show hint for adding custom word if no exact match in suggestions
+            const suggestionMatch = wordsData.find(word => word.en.toLowerCase() === query);
+            if (!suggestionMatch && query.length > 1) {
+                showAddWordHint();
+            } else {
+                hideAddWordHint();
+            }
+
+            showSuggestions(query);
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                
+                if (query.length === 0) return;
+                
+                // Check if it's a proper noun
+                if (isProperNoun(query)) {
+                    showStatusMessage('أسماء العلم غير مسموحة في هذه اللعبة!', 'warning');
+                    return;
+                }
+
+                // Check if it's a derivative of a selected word
+                const derivativeOf = isDerivativeOfSelected(query);
+                if (derivativeOf) {
+                    showStatusMessage(`هذه الكلمة مشتقة من "${derivativeOf}" الموجودة في قائمتك!`, 'warning');
+                    return;
+                }
+                
+                // First check if it's an exact match in our word data
+                const exactMatch = wordsData.find(word => word.en.toLowerCase() === query.toLowerCase());
+                if (exactMatch) {
+                    addWord(exactMatch);
+                } else {
+                    // Add as custom word without translation
+                    addWord({en: query, ar: null});
+                }
+            }
+        }
+
+        function showSuggestions(query) {
+            const filteredWords = wordsData.filter(word => {
+                const wordLower = word.en.toLowerCase();
+                return wordLower.includes(query) && 
+                       !selectedWords.find(selected => selected.en.toLowerCase() === wordLower) &&
+                       !isProperNoun(word.en) &&
+                       !isDerivativeOfSelected(word.en);
+            }).slice(0, 4);
+
+            if (filteredWords.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            suggestions.innerHTML = filteredWords.map(word => `
+                <div class="suggestion-item" onclick="addWord({en: '${word.en}', ar: '${word.ar}'})">
+                    <div class="word-en">${word.en}</div>
+                    <div class="word-ar">${word.ar}</div>
+                </div>
+            `).join('');
+
+            suggestions.style.display = 'block';
+        }
+
+        function hideSuggestions() {
+            suggestions.style.display = 'none';
+        }
+
+        function showAddWordHint() {
+            addWordHint.style.display = 'block';
+        }
+
+        function hideAddWordHint() {
+            addWordHint.style.display = 'none';
+        }
+
+        function addWord(word) {
+            // Check if word already exists
+            if (selectedWords.find(w => w.en.toLowerCase() === word.en.toLowerCase())) {
+                showStatusMessage('هذه الكلمة موجودة بالفعل في قائمتك!', 'error');
+                return;
+            }
+
+            // Check if it's a proper noun
+            if (isProperNoun(word.en)) {
+                showStatusMessage('أسماء العلم غير مسموحة في هذه اللعبة!', 'warning');
+                return;
+            }
+
+            // Check if it's a derivative of a selected word
+            const derivativeOf = isDerivativeOfSelected(word.en);
+            if (derivativeOf) {
+                showStatusMessage(`هذه الكلمة مشتقة من "${derivativeOf}" الموجودة في قائمتك!`, 'warning');
+                return;
+            }
+
+            selectedWords.push(word);
+            updateDisplay();
+            clearSearch();
+            
+            if (word.ar) {
+                showStatusMessage(`تمت إضافة "${word.en}" بنجاح!`, 'success');
+            } else {
+                showStatusMessage(`تمت إضافة "${word.en}" بنجاح! (بدون ترجمة)`, 'success');
+            }
+        }
+
+        function removeWord(index) {
+            const removedWord = selectedWords[index];
+            selectedWords.splice(index, 1);
+            updateDisplay();
+            showStatusMessage(`تم حذف "${removedWord.en}" من قائمتك`, 'success');
+        }
+
+        function updateDisplay() {
+            wordCount.textContent = selectedWords.length;
+            
+            if (selectedWords.length === 0) {
+                wordsGrid.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1;">لم تقم بإضافة أي كلمات بعد. ابدأ بالبحث عن كلمة!</p>';
+            } else {
+                wordsGrid.innerHTML = selectedWords.map((word, index) => `
+                    <div class="word-card">
+                        <button class="remove-btn" onclick="removeWord(${index})">✕</button>
+                        <div class="word-en">${word.en}</div>
+                        <div class="${word.ar ? 'word-ar' : 'no-translation'}">${word.ar || 'لا توجد ترجمة متاحة'}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            hideSuggestions();
+            hideAddWordHint();
+            clearInputStyles();
+            hideStatusMessage();
+        }
+
+        function clearInputStyles() {
+            searchInput.classList.remove('duplicate', 'blocked');
+        }
+
+        function resetGame() {
+            selectedWords = [];
+            updateDisplay();
+            clearSearch();
+            showStatusMessage('تم إعادة تعيين اللعبة بنجاح!', 'success');
+        }
+
+        function showStatusMessage(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                hideStatusMessage();
+            }, 3000);
+        }
+
+        function hideStatusMessage() {
+            statusMessage.style.display = 'none';
+        }
+
+        // Make functions globally available
+        window.addWord = addWord;
+        window.removeWord = removeWord;
+
+        // Initialize the app when the page loads
+        init();
+    </script>
+</body>
+</html>
+
