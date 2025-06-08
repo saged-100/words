@@ -106,10 +106,11 @@
 fetch('words.json')
   .then(response => response.json())
   .then(data => {
-    words = data.map(word => ({
-      english: word,
-      arabic: ""  // الترجمة فاضية مؤقتًا
-    }));
+    words = data.words.map(word => ({
+  english: word,
+  arabic: ""
+}));
+    
   })
   .catch(err => {
     console.error("فشل تحميل الكلمات من الملف:", err);
