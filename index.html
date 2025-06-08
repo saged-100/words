@@ -107,14 +107,14 @@ fetch('words.json')
   .then(response => response.json())
   .then(data => {
     words = data.words.map(word => ({
-  english: word,
-  arabic: ""
-}));
-    
+      english: word,
+      arabic: "" // لحد ما تضيف الترجمة
+    }));
   })
-  .catch(err => {
-    console.error("فشل تحميل الكلمات من الملف:", err);
+  .catch(error => {
+    console.error("فشل تحميل الكلمات من الملف:", error);
   });
+
 
 
     function filterWords() {
