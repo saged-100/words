@@ -102,20 +102,18 @@
   </div>
 
   <script>
-    // تحميل ملف JSON فيه الكلمات بدون ترجمة
-fetch('words.json')
-  .then(response => response.json())
-  .then(data => {
-    words = data.words.map(word => ({
-      english: word,
-      arabic: "" // لحد ما تضيف الترجمة
-    }));
-  })
-  .catch(error => {
-    console.error("فشل تحميل الكلمات من الملف:", error);
-  });
+    let words = [];
+    let usedWords = [];
 
-
+    // تحميل ملف JSON فيه الكلمات
+    fetch('words.json')
+      .then(response => response.json())
+      .then(data => {
+        words = data.words;  // الوصول إلى المصفوفة داخل كائن JSON
+      })
+      .catch(err => {
+        console.error("فشل تحميل الكلمات من الملف:", err);
+      });
 
     function filterWords() {
       const input = document.getElementById("wordInput");
@@ -133,24 +131,24 @@ fetch('words.json')
         return;
       }
 
-      // فلترة الكلمات اللي بتبدأ بالكلمة المدخلة ومش مكررة
+      // فلترة الكلمات التي تبدأ بالحروف المدخلة وغير مستخدمة
       const filtered = words
-        .filter(item => item.english.startsWith(value) && !usedWords.includes(item.english))
+        .filter(word => word.toLowerCase().startsWith(value) && !usedWords.includes(word))
         .slice(0, 4);
 
       suggestionsBox.innerHTML = filtered
-        .map(item => `<div onclick="selectWord('${item.english}', '${item.arabic}')">${item.english} - ${item.arabic}</div>`)
+        .map(word => `<div onclick="selectWord('${word}')">${word}</div>`)
         .join("");
     }
 
-    function selectWord(english, arabic) {
+    function selectWord(word) {
       const selectedDisplay = document.getElementById("selectedWords");
       const inputField = document.getElementById("wordInput");
 
-      if (!usedWords.includes(english)) {
-        usedWords.push(english);
+      if (!usedWords.includes(word)) {
+        usedWords.push(word);
         const wordSpan = document.createElement("span");
-        wordSpan.innerText = `${english} - ${arabic}`;
+        wordSpan.innerText = word;
         selectedDisplay.appendChild(wordSpan);
       }
 
@@ -166,6 +164,6 @@ fetch('words.json')
       document.getElementById("wordInput").classList.remove("repeated-input");
       document.getElementById("suggestions").innerHTML = "";
     }
-  </script>
+</script>
 </body>
 </html>
